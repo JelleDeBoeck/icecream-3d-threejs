@@ -24,12 +24,11 @@ scene.add(directionalLight);
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
-let selectedMesh = null;
 
-// Mesh arrays
+let iceCream;
 let clickableBolls = [];
 let toppings = [];
-let iceCream;
+let selectedMesh = null;
 
 // Startkleuren voor de bollen
 const startColors = {
@@ -38,59 +37,46 @@ const startColors = {
   'Node-Mesh_6': 0xF3E5AB  // vanille
 };
 
-// GLTF Loader
+// Laad GLTF
 const loader = new GLTFLoader();
-loader.load(
-  '/models/IceCream.glb',
+loader.load('/models/IceCream.glb',
   (gltf) => {
     iceCream = gltf.scene;
 
-    // Categoriseer meshes
     iceCream.traverse((child) => {
       if (child.isMesh) {
-        console.log('Mesh gevonden:', child.name);
-
         // Klikbare bollen
-        if (['Node-Mesh_1', 'Node-Mesh_5', 'Node-Mesh_6'].includes(child.name)) {
+        if (['Node-Mesh_1','Node-Mesh_5','Node-Mesh_6'].includes(child.name)) {
           clickableBolls.push(child);
-          // verwijder textures en zet startkleur
           child.material.map = null;
           child.material.color.set(startColors[child.name]);
-          child.material.needsUpdate = true;
         }
 
         // Toppings
-        if (['Node-Mesh_2', 'Node-Mesh_3', 'Node-Mesh_4'].includes(child.name)) {
+        if (['Node-Mesh_2','Node-Mesh_3','Node-Mesh_4'].includes(child.name)) {
           toppings.push(child);
-          child.visible = false; // geen toppings bij start
+          child.visible = false;
         }
       }
     });
 
-    // Center het model
+    // Center en schaal
     const box = new THREE.Box3().setFromObject(iceCream);
     const center = box.getCenter(new THREE.Vector3());
-    iceCream.position.x -= center.x;
+    iceCream.position.x -= center.x -1;
     iceCream.position.y -= center.y;
     iceCream.position.z -= center.z;
-
-    // Schaal indien nodig
     const size = box.getSize(new THREE.Vector3());
-    const maxDimension = Math.max(size.x, size.y, size.z);
-    const scale = 1 / maxDimension;
+    const scale = 1.5 / Math.max(size.x, size.y, size.z);
     iceCream.scale.set(scale, scale, scale);
 
     scene.add(iceCream);
 
-    // Zet standaard topping variant2 chocolade
     changeToppings('none');
-
     animate();
   },
   undefined,
-  (error) => {
-    console.error('Error loading GLB:', error);
-  }
+  (err) => console.error(err)
 );
 
 // Animate
@@ -100,14 +86,14 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-// Resize handler
+// Resize
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Click handler voor bollen
+// Click select bol
 window.addEventListener('click', (event) => {
   if (!iceCream) return;
 
@@ -116,23 +102,32 @@ window.addEventListener('click', (event) => {
 
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects(clickableBolls, true);
-
   if (intersects.length > 0) {
     selectedMesh = intersects[0].object;
     console.log('Geselecteerde bol:', selectedMesh.name);
   }
 });
 
-// Functie om smaak van geselecteerde bol te veranderen
-function changeFlavor(color) {
+// Change flavor
+document.getElementById('smaak-select').addEventListener('change', (e) => {
   if (!selectedMesh) return;
+  const val = e.target.value;
+  let color = 0xffffff;
+  if (val === 'chocolate') color = 0x84563C;
+  if (val === 'strawberry') color = 0xE30B5D;
+  if (val === 'vanilla') color = 0xF3E5AB;
   selectedMesh.material.color.set(color);
-}
+  updatePrice();
+});
 
-// Toppings buttons functie
+// Change topping
+document.getElementById('topping-select').addEventListener('change', (e) => {
+  changeToppings(e.target.value);
+  updatePrice();
+});
+
 function changeToppings(variant) {
   if (!toppings.length) return;
-
   toppings.forEach(t => t.visible = true);
 
   if (variant === 'none') {
@@ -148,11 +143,10 @@ function changeToppings(variant) {
   }
 }
 
-document.getElementById('chocolate-btn').addEventListener('click', () => changeFlavor(0x84563C));
-document.getElementById('strawberry-btn').addEventListener('click', () => changeFlavor(0xE30B5D));
-document.getElementById('vanilla-btn').addEventListener('click', () => changeFlavor(0xF3E5AB));
-
-document.getElementById('speculoos-btn').addEventListener('click', () => changeToppings('speculoos'));
-document.getElementById('chocolade-btn').addEventListener('click', () => changeToppings('chocolade'));
-document.getElementById('discodip-btn').addEventListener('click', () => changeToppings('discodip'));
-document.getElementById('no-toppings-btn').addEventListener('click', () => changeToppings('none'));
+// Bereken prijs
+function updatePrice() {
+  const basePrice = 6.50;
+  const toppingPrice = document.getElementById('topping-select').value === 'none' ? 0 : 1.20;
+  const total = basePrice + toppingPrice;
+  document.getElementById('prijs-waarde').textContent = `€${total.toFixed(2)}`;
+}
