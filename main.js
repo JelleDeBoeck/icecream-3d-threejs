@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
+// Render backend URL
+const BASE_URL = 'https://icecream-backend-aqq3.onrender.com';
+
 // Scene, camera, renderer
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xffc0cb);
@@ -182,7 +185,6 @@ document.getElementById('bestel-btn').addEventListener('click', async () => {
   };
   const selectedToppings = toppingValue === 'none' ? [] : [toppingMapping[toppingValue]];
 
-
   const bestelling = {
     customerName: naam,
     address: `${straat} ${huisnummer}, ${postcode} ${gemeente}`,
@@ -192,7 +194,7 @@ document.getElementById('bestel-btn').addEventListener('click', async () => {
   };
 
   try {
-    const response = await fetch('http://localhost:5000/orders', {
+    const response = await fetch(`${BASE_URL}/orders`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(bestelling)
