@@ -165,12 +165,31 @@ document.getElementById('bestel-btn').addEventListener('click', async () => {
     return;
   }
 
+  // Flavors
+  const flavorMapping = {
+    0x84563C: 'Chocolade',
+    0xE30B5D: 'Aardbei',
+    0xF3E5AB: 'Vanille'
+  };
+  const selectedFlavors = clickableBolls.map(b => flavorMapping[b.material.color.getHex()] || 'Onbekend');
+
+  // Topping
+  const toppingValue = document.getElementById('topping-select').value;
+  const toppingMapping = {
+    speculoos: 'Speculoos',
+    chocolade: 'Chocolade',
+    discodip: 'Discodip'
+  };
+  const selectedToppings = toppingValue === 'none' ? [] : [toppingMapping[toppingValue]];
+
+
   const bestelling = {
     customerName: naam,
     address: `${straat} ${huisnummer}, ${postcode} ${gemeente}`,
-    totalPrice: parseFloat(prijs.replace('€','')) // zorg dat het een nummer is
+    totalPrice: parseFloat(prijs.replace('€','')),
+    flavors: selectedFlavors,
+    toppings: selectedToppings
   };
-
 
   try {
     const response = await fetch('http://localhost:5000/orders', {
@@ -178,8 +197,6 @@ document.getElementById('bestel-btn').addEventListener('click', async () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(bestelling)
     });
-
-
 
     if (response.ok) {
       alert('Bestelling geplaatst!');
