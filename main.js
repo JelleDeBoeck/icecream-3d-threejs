@@ -150,3 +150,44 @@ function updatePrice() {
   const total = basePrice + toppingPrice;
   document.getElementById('prijs-waarde').textContent = `€${total.toFixed(2)}`;
 }
+
+// Plaats bestelling
+document.getElementById('bestel-btn').addEventListener('click', async () => {
+  const naam = document.getElementById('naam').value.trim();
+  const straat = document.getElementById('straat').value.trim();
+  const huisnummer = document.getElementById('huisnummer').value.trim();
+  const gemeente = document.getElementById('gemeente').value.trim();
+  const postcode = document.getElementById('postcode').value.trim();
+  const prijs = document.getElementById('prijs-waarde').textContent;
+
+  if (!naam || !straat || !huisnummer || !gemeente || !postcode) {
+    alert('Vul alle velden in.');
+    return;
+  }
+
+  const bestelling = {
+    customerName: naam,
+    address: `${straat} ${huisnummer}, ${postcode} ${gemeente}`,
+    totalPrice: parseFloat(prijs.replace('€','')) // zorg dat het een nummer is
+  };
+
+
+  try {
+    const response = await fetch('http://localhost:5000/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(bestelling)
+    });
+
+
+
+    if (response.ok) {
+      alert('Bestelling geplaatst!');
+    } else {
+      alert('Er is iets misgegaan bij het plaatsen van de bestelling.');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Er is iets misgegaan bij het plaatsen van de bestelling.');
+  }
+});
